@@ -1,9 +1,9 @@
 {
-  "name": "rust-vite-template",
+  "name": "walk-the-dog",
   "version": "0.1.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jtakakura/rust-vite-template.git"
+    "url": "git+https://github.com/jtakakura/rwalk-the-dog.git"
   },
   "license": "(MIT OR Apache-2.0)",
   "type": "module",
