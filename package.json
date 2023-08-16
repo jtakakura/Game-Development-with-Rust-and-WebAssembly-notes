@@ -1,0 +1,22 @@
+{
+  "name": "rust-vite-template",
+  "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jtakakura/rust-vite-template.git"
+  },
+  "license": "(MIT OR Apache-2.0)",
+  "type": "module",
+  "scripts": {
+    "clean": "npx rimraf dist pkg",
+    "wasm": "wasm-pack build --target web --out-name index",
+    "dev": "vite",
+    "build": "npm run clean && npm run wasm && vite build",
+    "test": "cargo test && wasm-pack test --headless"
+  },
+  "devDependencies": {
+    "vite": "^4.4.9",
+    "vite-plugin-top-level-await": "^1.3.1",
+    "vite-plugin-wasm": "^3.2.2"
+  }
+}
