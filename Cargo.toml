@@ -22,7 +22,14 @@ console_error_panic_hook = { version = "0.1.7", optional = true }
 # like the DOM.
 [dependencies.web-sys]
 version = "0.3.64"
-features = ["console"]
+features = [
+    "console",
+    "Window",
+    "Document",
+    "HtmlCanvasElement",
+    "CanvasRenderingContext2d",
+    "Element",
+]
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.37"
