@@ -1,5 +1,6 @@
 mod utils;
 
+use rand::prelude::*;
 use wasm_bindgen::prelude::*;
 
 use utils::set_panic_hook;
@@ -24,13 +25,23 @@ pub fn main() -> Result<(), JsValue> {
         .dyn_into::<web_sys::CanvasRenderingContext2d>()
         .unwrap();
 
-    sierpinski(&context, [(300.0, 0.0), (0.0, 600.0), (600.0, 600.0)], 5);
+    sierpinski(
+        &context,
+        [(300.0, 0.0), (0.0, 600.0), (600.0, 600.0)],
+        (0, 255, 0),
+        5,
+    );
 
     Ok(())
 }
 
-fn sierpinski(context: &web_sys::CanvasRenderingContext2d, points: [(f64, f64); 3], depth: u8) {
-    draw_triangle(&context, points);
+fn sierpinski(
+    context: &web_sys::CanvasRenderingContext2d,
+    points: [(f64, f64); 3],
+    color: (u8, u8, u8),
+    depth: u8,
+) {
+    draw_triangle(&context, points, color);
 
     let [top, left, right] = points;
     let depth = depth - 1;
@@ -39,9 +50,32 @@ fn sierpinski(context: &web_sys::CanvasRenderingContext2d, points: [(f64, f64); 
         let left_middle = midpoint(top, left);
         let right_middle = midpoint(top, right);
         let bottom_middle = midpoint(left, right);
-        sierpinski(&context, [top, left_middle, right_middle], depth);
-        sierpinski(&context, [left_middle, left, bottom_middle], depth);
-        sierpinski(&context, [right_middle, bottom_middle, right], depth);
+
+        let mut rng = thread_rng();
+        let next_color = (
+            rng.gen_range(0..255),
+            rng.gen_range(0..255),
+            rng.gen_range(0..255),
+        );
+
+        sierpinski(
+            &context,
+            [top, left_middle, right_middle],
+            next_color,
+            depth,
+        );
+        sierpinski(
+            &context,
+            [left_middle, left, bottom_middle],
+            next_color,
+            depth,
+        );
+        sierpinski(
+            &context,
+            [right_middle, bottom_middle, right],
+            next_color,
+            depth,
+        );
     }
 }
 
@@ -49,8 +83,14 @@ fn midpoint(point_1: (f64, f64), point_2: (f64, f64)) -> (f64, f64) {
     ((point_1.0 + point_2.0) / 2.0, (point_1.1 + point_2.1) / 2.0)
 }
 
-fn draw_triangle(context: &web_sys::CanvasRenderingContext2d, points: [(f64, f64); 3]) {
+fn draw_triangle(
+    context: &web_sys::CanvasRenderingContext2d,
+    points: [(f64, f64); 3],
+    color: (u8, u8, u8),
+) {
     let [top, left, right] = points;
+    let color_str = format!("rgb({},{},{})", color.0, color.1, color.2);
+    context.set_fill_style(&wasm_bindgen::JsValue::from_str(&color_str));
     context.move_to(top.0, top.1);
     context.begin_path();
     context.line_to(left.0, left.1);
@@ -58,4 +98,5 @@ fn draw_triangle(context: &web_sys::CanvasRenderingContext2d, points: [(f64, f64
     context.line_to(top.0, top.1);
     context.close_path();
     context.stroke();
+    context.fill();
 }
