@@ -1,14 +1,24 @@
-import { defineConfig } from "vite"
+import path from "path";
+import { defineConfig } from "vite";
+import { viteStaticCopy } from "vite-plugin-static-copy";
 import topLevelAwait from "vite-plugin-top-level-await";
 import wasm from "vite-plugin-wasm";
 
 export default defineConfig({
-    root: "./web",
+    root: path.resolve(__dirname, "web"),
     build: {
-        outDir: "../dist"
+        outDir: path.resolve(__dirname, "dist"),
     },
     plugins: [
         wasm(),
-        topLevelAwait()
+        topLevelAwait(),
+        viteStaticCopy({
+            targets: [
+                {
+                    src: path.resolve(__dirname, "static/**/*"),
+                    dest: "./"
+                },
+            ]
+        }),
     ]
 });
