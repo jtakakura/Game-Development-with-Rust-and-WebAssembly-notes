@@ -26,6 +26,14 @@ pub fn main() -> Result<(), JsValue> {
         .unwrap();
 
     let image = web_sys::HtmlImageElement::new().unwrap();
+
+    let callback = Closure::once(|| {
+        web_sys::console::log_1(&JsValue::from_str("loaded"));
+    });
+
+    image.set_onload(Some(callback.as_ref().unchecked_ref()));
+    callback.forget();
+
     image.set_src("Idle (1).png");
     context.draw_image_with_html_image_element(&image, 0.0, 0.0);
 
