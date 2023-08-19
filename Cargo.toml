@@ -19,6 +19,8 @@ wasm-bindgen = "0.2.87"
 console_error_panic_hook = { version = "0.1.7", optional = true }
 rand = "0.8.5"
 getrandom = { version = "0.2.10", features = ["js"] }
+futures = "0.3.28"
+wasm-bindgen-futures = "0.4.37"
 
 # The `web-sys` crate allows you to interact with the various browser APIs,
 # like the DOM.
