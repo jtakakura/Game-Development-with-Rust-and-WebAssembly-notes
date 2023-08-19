@@ -1,11 +1,31 @@
 mod utils;
 
+use std::collections::HashMap;
 use std::{rc::Rc, sync::Mutex};
 
 use rand::prelude::*;
+use serde::Deserialize;
 use wasm_bindgen::prelude::*;
 
 use utils::set_panic_hook;
+
+#[derive(Deserialize)]
+struct Rect {
+    x: u16,
+    y: u16,
+    w: u16,
+    h: u16,
+}
+
+#[derive(Deserialize)]
+struct Cell {
+    frame: Rect,
+}
+
+#[derive(Deserialize)]
+struct Sheet {
+    frames: HashMap<String, Cell>,
+}
 
 // This is like the `main` function, except for JavaScript.
 #[wasm_bindgen(start)]
@@ -58,6 +78,12 @@ pub fn main() -> Result<(), JsValue> {
             (0, 255, 0),
             5,
         );
+
+        let json = fetch_json("rhb.json")
+            .await
+            .expect("Could not fetch rhb.json");
+        let sheet: Sheet = serde_wasm_bindgen::from_value(json)
+            .expect("Could not convert rhb.json into a Sheet structure");
     });
 
     Ok(())
