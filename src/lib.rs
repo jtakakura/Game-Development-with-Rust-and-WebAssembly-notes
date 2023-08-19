@@ -63,6 +63,14 @@ pub fn main() -> Result<(), JsValue> {
     Ok(())
 }
 
+async fn fetch_json(json_path: &str) -> Result<JsValue, JsValue> {
+    let window = web_sys::window().unwrap();
+    let resp_value = wasm_bindgen_futures::JsFuture::from(window.fetch_with_str(json_path)).await?;
+    let resp: web_sys::Response = resp_value.dyn_into().unwrap();
+
+    wasm_bindgen_futures::JsFuture::from(resp.json()?).await
+}
+
 fn sierpinski(
     context: &web_sys::CanvasRenderingContext2d,
     points: [(f64, f64); 3],
