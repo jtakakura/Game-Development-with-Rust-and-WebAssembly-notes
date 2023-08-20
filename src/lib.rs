@@ -1,9 +1,10 @@
+#[macro_use]
+mod browser;
 mod utils;
 
 use std::collections::HashMap;
 use std::{rc::Rc, sync::Mutex};
 
-use rand::prelude::*;
 use serde::Deserialize;
 use wasm_bindgen::prelude::*;
 
@@ -32,26 +33,12 @@ struct Sheet {
 pub fn main() -> Result<(), JsValue> {
     set_panic_hook();
 
-    let window = web_sys::window().unwrap();
-    let document = window.document().unwrap();
-    let canvas = document
-        .get_element_by_id("canvas")
-        .unwrap()
-        .dyn_into::<web_sys::HtmlCanvasElement>()
-        .unwrap();
+    let context = browser::context().expect("Could not get browser context");
 
-    let context = canvas
-        .get_context("2d")
-        .unwrap()
-        .unwrap()
-        .dyn_into::<web_sys::CanvasRenderingContext2d>()
-        .unwrap();
-
-    wasm_bindgen_futures::spawn_local(async move {
-        let json = fetch_json("rhb.json")
+    browser::spawn_local(async move {
+        let sheet: Sheet = browser::fetch_json("rhb.json")
             .await
-            .expect("Could not fetch rhb.json");
-        let sheet: Sheet = serde_wasm_bindgen::from_value(json)
+            .expect("Could not fetch rhb.json")
             .expect("Could not convert rhb.json into a Sheet structure");
 
         let (success_tx, success_rx) = futures::channel::oneshot::channel::<Result<(), JsValue>>();
@@ -95,10 +82,12 @@ pub fn main() -> Result<(), JsValue> {
                 sprite.frame.h.into(),
             );
         }) as Box<dyn FnMut()>);
-        window.set_interval_with_callback_and_timeout_and_arguments_0(
-            interval_callback.as_ref().unchecked_ref(),
-            50,
-        );
+        browser::window()
+            .unwrap()
+            .set_interval_with_callback_and_timeout_and_arguments_0(
+                interval_callback.as_ref().unchecked_ref(),
+                50,
+            );
         interval_callback.forget();
     });
 
