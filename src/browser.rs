@@ -108,3 +108,10 @@ pub fn request_animation_frame(callback: &LoopClosure) -> Result<i32> {
 pub fn create_raf_closure(f: impl FnMut(f64) + 'static) -> LoopClosure {
     closure_wrap(Box::new(f))
 }
+
+pub fn now() -> Result<f64> {
+    Ok(window()?
+        .performance()
+        .ok_or_else(|| anyhow!("Performance object not found"))?
+        .now())
+}
