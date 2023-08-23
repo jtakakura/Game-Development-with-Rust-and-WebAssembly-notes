@@ -40,6 +40,7 @@ features = [
     "Element",
     "Response",
     "Performance",
+    "KeyboardEvent",
 ]
 
 [dev-dependencies]
