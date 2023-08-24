@@ -6,6 +6,7 @@ use futures::channel::{
     mpsc::{unbounded, UnboundedReceiver},
     oneshot::channel,
 };
+use serde::de;
 use wasm_bindgen::{prelude::Closure, JsCast, JsValue};
 use web_sys::{CanvasRenderingContext2d, HtmlImageElement};
 
@@ -199,4 +200,10 @@ impl KeyState {
     pub fn set_released(&mut self, key: &str, _evt: web_sys::KeyboardEvent) {
         self.pressed_keys.remove(key);
     }
+}
+
+#[derive(Clone, Copy)]
+pub struct Point {
+    pub x: i16,
+    pub y: i16,
 }
