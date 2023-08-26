@@ -148,6 +148,15 @@ mod red_hat_boy_states {
         _state: S,
     }
 
+    impl RedHatBoyState<Idle> {
+        pub fn run(self) -> RedHatBoyState<Running> {
+            RedHatBoyState {
+                context: self.context,
+                _state: Running {},
+            }
+        }
+    }
+
     #[derive(Copy, Clone)]
     pub struct RedHatBoyContext {
         pub frame: u8,
