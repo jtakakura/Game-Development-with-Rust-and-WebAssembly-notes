@@ -10,6 +10,8 @@ use crate::{
     engine::{self, Game, Point, Rect, Renderer},
 };
 
+use self::red_hat_boy_states::{Idle, RedHatBoyState, Running};
+
 #[derive(Deserialize)]
 struct SheetRect {
     x: u16,
@@ -123,4 +125,39 @@ impl Game for WalkTheDog {
             )
         });
     }
+}
+
+struct RedHatBoy {
+    state_machine: RedHatBoyStateMachine,
+    sprite_sheet: Sheet,
+    image: HtmlImageElement,
+}
+
+#[derive(Copy, Clone)]
+enum RedHatBoyStateMachine {
+    Idle(RedHatBoyState<Idle>),
+    Running(RedHatBoyState<Running>),
+}
+
+mod red_hat_boy_states {
+    use crate::engine::Point;
+
+    #[derive(Copy, Clone)]
+    pub struct RedHatBoyState<S> {
+        context: RedHatBoyContext,
+        _state: S,
+    }
+
+    #[derive(Copy, Clone)]
+    pub struct RedHatBoyContext {
+        pub frame: u8,
+        pub position: Point,
+        pub velocity: Point,
+    }
+
+    #[derive(Copy, Clone)]
+    pub struct Idle;
+
+    #[derive(Copy, Clone)]
+    pub struct Running;
 }
