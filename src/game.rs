@@ -7,7 +7,9 @@ use crate::{
     engine::{self, Game, Rect, Renderer, Sheet},
 };
 
-use self::red_hat_boy_states::{Idle, RedHatBoyContext, RedHatBoyState, Running, Sliding};
+use self::red_hat_boy_states::{
+    Idle, RedHatBoyContext, RedHatBoyState, Running, Sliding, SlidingEndState,
+};
 
 struct RedHatBoy {
     state_machine: RedHatBoyStateMachine,
@@ -86,6 +88,7 @@ impl RedHatBoyStateMachine {
             (RedHatBoyStateMachine::Running(state), Event::Slide) => state.slide().into(),
             (RedHatBoyStateMachine::Idle(state), Event::Update) => state.update().into(),
             (RedHatBoyStateMachine::Running(state), Event::Update) => state.update().into(),
+            (RedHatBoyStateMachine::Sliding(state), Event::Update) => state.update().into(),
             _ => self,
         }
     }
@@ -126,6 +129,15 @@ impl From<RedHatBoyState<Running>> for RedHatBoyStateMachine {
 impl From<RedHatBoyState<Sliding>> for RedHatBoyStateMachine {
     fn from(state: RedHatBoyState<Sliding>) -> Self {
         RedHatBoyStateMachine::Sliding(state)
+    }
+}
+
+impl From<SlidingEndState> for RedHatBoyStateMachine {
+    fn from(state: SlidingEndState) -> Self {
+        match state {
+            SlidingEndState::Sliding(state) => RedHatBoyStateMachine::Sliding(state),
+            SlidingEndState::Complete(state) => RedHatBoyStateMachine::Running(state),
+        }
     }
 }
 
@@ -201,13 +213,31 @@ mod red_hat_boy_states {
     }
 
     impl RedHatBoyState<Sliding> {
-        pub fn update(&mut self) {
+        pub fn update(mut self) -> SlidingEndState {
             self.context = self.context.update(SLIDING_FRAMES);
+
+            if self.context.frame >= SLIDING_FRAMES {
+                SlidingEndState::Complete(self.stand())
+            } else {
+                SlidingEndState::Sliding(self)
+            }
+        }
+
+        pub fn stand(self) -> RedHatBoyState<Running> {
+            RedHatBoyState {
+                context: self.context.reset_frames(),
+                _state: Running,
+            }
         }
 
         pub fn frame_name(&self) -> &str {
             SLIDING_FRAME_NAME
         }
+    }
+
+    pub enum SlidingEndState {
+        Sliding(RedHatBoyState<Sliding>),
+        Complete(RedHatBoyState<Running>),
     }
 
     #[derive(Copy, Clone)]
