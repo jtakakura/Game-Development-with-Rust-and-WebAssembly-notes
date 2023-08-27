@@ -146,11 +146,15 @@ pub enum Event {
 impl RedHatBoyStateMachine {
     fn transition(self, event: Event) -> Self {
         match (self, event) {
-            (RedHatBoyStateMachine::Idle(state), Event::Run) => {
-                RedHatBoyStateMachine::Running(state.run())
-            }
+            (RedHatBoyStateMachine::Idle(state), Event::Run) => state.run().into(),
             _ => self,
         }
+    }
+}
+
+impl From<RedHatBoyState<Running>> for RedHatBoyStateMachine {
+    fn from(state: RedHatBoyState<Running>) -> Self {
+        RedHatBoyStateMachine::Running(state)
     }
 }
 
