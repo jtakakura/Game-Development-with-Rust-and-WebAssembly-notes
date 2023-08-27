@@ -139,6 +139,21 @@ enum RedHatBoyStateMachine {
     Running(RedHatBoyState<Running>),
 }
 
+pub enum Event {
+    Run,
+}
+
+impl RedHatBoyStateMachine {
+    fn transition(self, event: Event) -> Self {
+        match (self, event) {
+            (RedHatBoyStateMachine::Idle(state), Event::Run) => {
+                RedHatBoyStateMachine::Running(state.run())
+            }
+            _ => self,
+        }
+    }
+}
+
 mod red_hat_boy_states {
     use crate::engine::Point;
 
