@@ -249,20 +249,30 @@ pub struct Point {
 pub struct Image {
     element: HtmlImageElement,
     position: Point,
+    bounding_box: Rect,
 }
 
 impl Image {
     pub fn new(element: HtmlImageElement, position: Point) -> Self {
-        Self { element, position }
+        let bounding_box = Rect {
+            x: position.x.into(),
+            y: position.y.into(),
+            width: element.width() as f32,
+            height: element.height() as f32,
+        };
+        Self {
+            element,
+            position,
+            bounding_box,
+        }
     }
 
     pub fn draw(&self, renderer: &Renderer) {
         renderer.draw_entire_image(&self.element, self.position);
-        renderer.draw_rect(&Rect {
-            x: self.position.x.into(),
-            y: self.position.y.into(),
-            width: self.element.width() as f32,
-            height: self.element.height() as f32,
-        });
+        renderer.draw_rect(&self.bounding_box);
+    }
+
+    pub fn bounding_box(&self) -> &Rect {
+        &self.bounding_box
     }
 }
