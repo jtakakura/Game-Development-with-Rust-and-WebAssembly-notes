@@ -265,7 +265,7 @@ mod red_hat_boy_states {
     const IDLE_FRAMES: u8 = 29;
     const RUN_FRAME_NAME: &str = "Run";
     const RUN_FRAMES: u8 = 23;
-    const RUN_SPEED: i16 = 3;
+    const RUN_SPEED: i16 = 4;
     const SLIDING_FRAME_NAME: &str = "Slide";
     const SLIDING_FRAMES: u8 = 14;
     const JUMPING_FRAME_NAME: &str = "Jump";
@@ -647,6 +647,10 @@ impl WalkTheDog {
     }
 }
 
+const LOW_PLATFORM: i16 = 420;
+const HIGH_PLATFORM: i16 = 375;
+const FIRST_PLATFORM: i16 = 370;
+
 #[async_trait(?Send)]
 impl Game for WalkTheDog {
     async fn initialize(&mut self) -> Result<Box<dyn Game>> {
@@ -659,7 +663,10 @@ impl Game for WalkTheDog {
                 let platform = Platform::new(
                     platform_sheet,
                     engine::load_image("tiles.png").await?,
-                    Point { x: 200, y: 400 },
+                    Point {
+                        x: FIRST_PLATFORM,
+                        y: LOW_PLATFORM,
+                    },
                 );
                 let rhb = RedHatBoy::new(json, engine::load_image("rhb.png").await?);
                 Ok(Box::new(WalkTheDog::Loaded(Walk {
