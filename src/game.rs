@@ -80,6 +80,10 @@ impl RedHatBoy {
         self.state_machine.context().position.y
     }
 
+    fn walking_speed(&self) -> i16 {
+        self.state_machine.context().velocity.x
+    }
+
     fn velocity_y(&self) -> i16 {
         self.state_machine.context().velocity.y
     }
@@ -491,7 +495,6 @@ mod red_hat_boy_states {
             if self.velocity.y < TERMINAL_VELOCITY {
                 self.velocity.y += GRAVITY;
             }
-            self.position.x += self.velocity.x;
             self.position.y += self.velocity.y;
 
             if self.position.y > FLOOR {
@@ -637,6 +640,12 @@ pub struct Walk {
     platform: Platform,
 }
 
+impl Walk {
+    fn velocity(&self) -> i16 {
+        -self.boy.walking_speed()
+    }
+}
+
 pub enum WalkTheDog {
     Loading,
     Loaded(Walk),
@@ -696,6 +705,10 @@ impl Game for WalkTheDog {
             }
 
             walk.boy.update();
+
+            walk.platform.position.x += walk.velocity();
+            walk.stone.move_horizontal(walk.velocity());
+            walk.background.move_horizontal(walk.velocity());
 
             for bounding_box in &walk.platform.bounding_boxes() {
                 if walk.boy.bounding_box().intersects(bounding_box) {

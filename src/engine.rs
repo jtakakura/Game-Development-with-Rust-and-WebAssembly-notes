@@ -284,4 +284,9 @@ impl Image {
     pub fn bounding_box(&self) -> &Rect {
         &self.bounding_box
     }
+
+    pub fn move_horizontal(&mut self, distance: i16) {
+        self.bounding_box.x += distance as f32;
+        self.position.x += distance;
+    }
 }
