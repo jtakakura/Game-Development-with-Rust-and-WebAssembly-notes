@@ -173,6 +173,14 @@ impl Rect {
             && self.y < rect.y + rect.height
             && self.y + self.height > rect.y
     }
+
+    pub fn right(&self) -> i16 {
+        self.x + self.width
+    }
+
+    pub fn bottom(&self) -> i16 {
+        self.y + self.height
+    }
 }
 
 enum KeyPress {
@@ -296,6 +304,6 @@ impl Image {
     }
 
     pub fn right(&self) -> i16 {
-        self.bounding_box.x + self.bounding_box.width
+        self.bounding_box.right()
     }
 }
