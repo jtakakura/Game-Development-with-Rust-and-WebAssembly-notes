@@ -117,8 +117,8 @@ pub struct Renderer {
 impl Renderer {
     pub fn clear(&self, rect: &Rect) {
         self.context.clear_rect(
-            rect.x.into(),
-            rect.y.into(),
+            rect.x().into(),
+            rect.y().into(),
             rect.width.into(),
             rect.height.into(),
         );
@@ -128,12 +128,12 @@ impl Renderer {
         self.context
             .draw_image_with_html_image_element_and_sw_and_sh_and_dx_and_dy_and_dw_and_dh(
                 image,
-                frame.x.into(),
-                frame.y.into(),
+                frame.x().into(),
+                frame.y().into(),
                 frame.width.into(),
                 frame.height.into(),
-                destination.x.into(),
-                destination.y.into(),
+                destination.x().into(),
+                destination.y().into(),
                 destination.width.into(),
                 destination.height.into(),
             )
@@ -150,8 +150,8 @@ impl Renderer {
         self.context.set_stroke_style(&JsValue::from_str("#FF0000"));
         self.context.begin_path();
         self.context.rect(
-            bounding_box.x.into(),
-            bounding_box.y.into(),
+            bounding_box.x().into(),
+            bounding_box.y().into(),
             bounding_box.width.into(),
             bounding_box.height.into(),
         );
@@ -160,26 +160,57 @@ impl Renderer {
 }
 
 pub struct Rect {
-    pub x: i16,
-    pub y: i16,
+    pub position: Point,
     pub width: i16,
     pub height: i16,
 }
 
 impl Rect {
+    pub fn new(position: Point, width: i16, height: i16) -> Self {
+        Self {
+            position,
+            width,
+            height,
+        }
+    }
+
+    pub fn new_from_x_y(x: i16, y: i16, width: i16, height: i16) -> Self {
+        Self {
+            position: Point { x, y },
+            width,
+            height,
+        }
+    }
+
+    pub fn x(&self) -> i16 {
+        self.position.x
+    }
+
+    pub fn set_x(&mut self, x: i16) {
+        self.position.x = x;
+    }
+
+    pub fn y(&self) -> i16 {
+        self.position.y
+    }
+
+    pub fn set_y(&mut self, y: i16) {
+        self.position.y = y;
+    }
+
     pub fn intersects(&self, rect: &Rect) -> bool {
-        self.x < rect.x + rect.width
-            && self.x + self.width > rect.x
-            && self.y < rect.y + rect.height
-            && self.y + self.height > rect.y
+        self.x() < rect.right()
+            && self.right() > rect.x()
+            && self.y() < rect.bottom()
+            && self.bottom() > rect.y()
     }
 
     pub fn right(&self) -> i16 {
-        self.x + self.width
+        self.x() + self.width
     }
 
     pub fn bottom(&self) -> i16 {
-        self.y + self.height
+        self.y() + self.height
     }
 }
 
@@ -265,27 +296,24 @@ pub struct Point {
 
 pub struct Image {
     element: HtmlImageElement,
-    position: Point,
     bounding_box: Rect,
 }
 
 impl Image {
     pub fn new(element: HtmlImageElement, position: Point) -> Self {
         let bounding_box = Rect {
-            x: position.x,
-            y: position.y,
+            position,
             width: element.width() as i16,
             height: element.height() as i16,
         };
         Self {
             element,
-            position,
             bounding_box,
         }
     }
 
     pub fn draw(&self, renderer: &Renderer) {
-        renderer.draw_entire_image(&self.element, self.position);
+        renderer.draw_entire_image(&self.element, self.bounding_box.position);
         renderer.draw_rect(&self.bounding_box);
     }
 
@@ -294,13 +322,11 @@ impl Image {
     }
 
     pub fn move_horizontal(&mut self, distance: i16) {
-        self.bounding_box.x += distance;
-        self.position.x += distance;
+        self.set_x(self.bounding_box.x() + distance);
     }
 
     pub fn set_x(&mut self, x: i16) {
-        self.bounding_box.x = x;
-        self.position.x = x;
+        self.bounding_box.set_x(x);
     }
 
     pub fn right(&self) -> i16 {
