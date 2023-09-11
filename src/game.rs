@@ -657,11 +657,36 @@ impl Obstacle for Platform {
     }
 }
 
+pub struct Barrier {
+    image: Image,
+}
+
+impl Barrier {
+    fn new(image: Image) -> Self {
+        Self { image }
+    }
+}
+
+impl Obstacle for Barrier {
+    fn check_intersection(&self, boy: &mut RedHatBoy) {
+        if boy.bounding_box().intersects(self.image.bounding_box()) {
+            boy.knock_out();
+        }
+    }
+
+    fn draw(&self, renderer: &Renderer) {
+        self.image.draw(renderer);
+    }
+
+    fn move_horizontal(&mut self, x: i16) {
+        self.image.move_horizontal(x);
+    }
+}
+
 pub struct Walk {
     boy: RedHatBoy,
     backgrounds: [Image; 2],
-    stone: Image,
-    platform: Box<dyn Obstacle>,
+    obstacles: Vec<Box<dyn Obstacle>>,
 }
 
 impl Walk {
@@ -716,8 +741,10 @@ impl Game for WalkTheDog {
                             },
                         ),
                     ],
-                    stone: Image::new(stone, Point { x: 150, y: 546 }),
-                    platform: Box::new(platform),
+                    obstacles: vec![
+                        Box::new(Barrier::new(Image::new(stone, Point { x: 150, y: 546 }))),
+                        Box::new(platform),
+                    ],
                 })))
             }
             WalkTheDog::Loaded(_) => Err(anyhow!("Error: Game is already initialized!")),
@@ -741,10 +768,6 @@ impl Game for WalkTheDog {
             walk.boy.update();
 
             let velocity = walk.velocity();
-            walk.platform.move_horizontal(velocity);
-            walk.stone.move_horizontal(velocity);
-
-            let velocity = walk.velocity();
             let [first_background, second_background] = &mut walk.backgrounds;
             first_background.move_horizontal(velocity);
             second_background.move_horizontal(velocity);
@@ -757,15 +780,10 @@ impl Game for WalkTheDog {
                 second_background.set_x(first_background.right());
             }
 
-            walk.platform.check_intersection(&mut walk.boy);
-
-            if walk
-                .boy
-                .bounding_box()
-                .intersects(walk.stone.bounding_box())
-            {
-                walk.boy.knock_out();
-            }
+            walk.obstacles.iter_mut().for_each(|obstacle| {
+                obstacle.move_horizontal(velocity);
+                obstacle.check_intersection(&mut walk.boy);
+            });
         }
     }
 
@@ -777,8 +795,9 @@ impl Game for WalkTheDog {
                 background.draw(renderer);
             });
             walk.boy.draw(renderer);
-            walk.stone.draw(renderer);
-            walk.platform.draw(renderer);
+            walk.obstacles.iter().for_each(|obstacle| {
+                obstacle.draw(renderer);
+            });
         }
     }
 }
