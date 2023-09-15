@@ -167,7 +167,7 @@ pub struct Rect {
 }
 
 impl Rect {
-    pub fn new(position: Point, width: i16, height: i16) -> Self {
+    pub const fn new(position: Point, width: i16, height: i16) -> Self {
         Self {
             position,
             width,
@@ -175,7 +175,7 @@ impl Rect {
         }
     }
 
-    pub fn new_from_x_y(x: i16, y: i16, width: i16, height: i16) -> Self {
+    pub const fn new_from_x_y(x: i16, y: i16, width: i16, height: i16) -> Self {
         Self {
             position: Point { x, y },
             width,
