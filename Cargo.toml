@@ -41,6 +41,10 @@ features = [
     "Response",
     "Performance",
     "KeyboardEvent",
+    "AudioContext",
+    "AudioBuffer",
+    "AudioBufferSourceNode",
+    "AudioDestinationNode",
 ]
 
 [dev-dependencies]

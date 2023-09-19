@@ -3,6 +3,7 @@ mod browser;
 mod engine;
 mod game;
 mod segments;
+mod sound;
 mod utils;
 
 use engine::GameLoop;
