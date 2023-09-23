@@ -7,7 +7,7 @@ use web_sys::HtmlImageElement;
 
 use crate::{
     browser,
-    engine::{self, Cell, Game, Image, Point, Rect, Renderer, Sheet, SpriteSheet},
+    engine::{self, Audio, Cell, Game, Image, Point, Rect, Renderer, Sheet, Sound, SpriteSheet},
     segments::{platform_and_stone, stone_and_platform},
 };
 
@@ -25,9 +25,9 @@ pub struct RedHatBoy {
 }
 
 impl RedHatBoy {
-    fn new(sheet: Sheet, image: HtmlImageElement) -> Self {
+    fn new(sheet: Sheet, image: HtmlImageElement, audio: Audio, jump_sound: Sound) -> Self {
         Self {
-            state_machine: RedHatBoyStateMachine::Idle(RedHatBoyState::new()),
+            state_machine: RedHatBoyStateMachine::Idle(RedHatBoyState::new(audio, jump_sound)),
             sprite_sheet: sheet,
             image,
         }
@@ -258,7 +258,7 @@ impl From<FallingEndState> for RedHatBoyStateMachine {
 }
 
 mod red_hat_boy_states {
-    use crate::engine::Point;
+    use crate::engine::{Audio, Point, Sound};
 
     use super::HEIGHT;
 
@@ -293,7 +293,7 @@ mod red_hat_boy_states {
     }
 
     impl RedHatBoyState<Idle> {
-        pub fn new() -> Self {
+        pub fn new(audio: Audio, jump_sound: Sound) -> Self {
             RedHatBoyState {
                 context: RedHatBoyContext {
                     frame: 0,
@@ -302,6 +302,8 @@ mod red_hat_boy_states {
                         y: FLOOR,
                     },
                     velocity: Point { x: 0, y: 0 },
+                    audio,
+                    jump_sound,
                 },
                 _state: Idle {},
             }
@@ -335,7 +337,8 @@ mod red_hat_boy_states {
                 context: self
                     .context
                     .set_vertical_velocity(JUMP_SPEED)
-                    .reset_frames(),
+                    .reset_frames()
+                    .play_jump_sound(),
                 _state: Jumping {},
             }
         }
@@ -482,6 +485,8 @@ mod red_hat_boy_states {
         pub frame: u8,
         pub position: Point,
         pub velocity: Point,
+        audio: Audio,
+        jump_sound: Sound,
     }
 
     impl RedHatBoyContext {
@@ -528,6 +533,13 @@ mod red_hat_boy_states {
         fn stop(mut self) -> Self {
             self.velocity.x = 0;
             self.velocity.y = 0;
+            self
+        }
+
+        fn play_jump_sound(mut self) -> Self {
+            if let Err(error) = self.audio.play_sound(&self.jump_sound) {
+                log!("Error playing jump sound: {:#?}", error);
+            }
             self
         }
     }
@@ -749,8 +761,10 @@ impl Game for WalkTheDog {
                     tiles,
                     engine::load_image("tiles.png").await?,
                 ));
+                let audio = Audio::new()?;
+                let sound = audio.load_sound("SFX_Jump_23.mp3").await?;
 
-                let rhb = RedHatBoy::new(json, engine::load_image("rhb.png").await?);
+                let rhb = RedHatBoy::new(json, engine::load_image("rhb.png").await?, audio, sound);
                 let background_width = background.width() as i16;
                 let starting_obstacles = stone_and_platform(stone.clone(), sprite_sheet.clone(), 0);
                 let timeline = rightmost(&starting_obstacles);
