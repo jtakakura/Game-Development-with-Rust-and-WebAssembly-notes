@@ -1,0 +1,12 @@
+@font-face {
+    font-family: 'Ken Future';
+    src: url('kenney_future_narrow-webfont.woff2');
+}
+
+#ui {
+    position: absolute;
+}
+
+button {
+    font-family: 'Ken Future';
+}
