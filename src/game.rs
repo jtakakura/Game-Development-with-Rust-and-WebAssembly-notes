@@ -766,7 +766,15 @@ impl<T> WalkTheDogState<T> {
 }
 
 impl WalkTheDogState<Ready> {
-    fn update(self, keystate: &KeyState) -> ReadyEndState {
+    fn new(walk: Walk) -> Self {
+        WalkTheDogState {
+            _state: Ready,
+            walk,
+        }
+    }
+
+    fn update(mut self, keystate: &KeyState) -> ReadyEndState {
+        self.walk.boy.update();
         if keystate.is_pressed("ArrowRight") {
             ReadyEndState::Complete(self.start_running())
         } else {
@@ -788,7 +796,42 @@ impl WalkTheDogState<Ready> {
 }
 
 impl WalkTheDogState<Walking> {
-    fn update(self, keystate: &KeyState) -> WalkTheDogState<Walking> {
+    fn update(mut self, keystate: &KeyState) -> WalkTheDogState<Walking> {
+        if keystate.is_pressed("Space") {
+            self.walk.boy.jump();
+        }
+
+        if keystate.is_pressed("ArrowDown") {
+            self.walk.boy.slide();
+        }
+
+        self.walk.boy.update();
+
+        let walking_speed = self.walk.velocity();
+        let [first_background, second_background] = &mut self.walk.backgrounds;
+        first_background.move_horizontal(walking_speed);
+        second_background.move_horizontal(walking_speed);
+
+        if first_background.right() < 0 {
+            first_background.set_x(second_background.right());
+        }
+
+        if second_background.right() < 0 {
+            second_background.set_x(first_background.right());
+        }
+
+        self.walk.obstacles.retain(|obstacle| obstacle.right() > 0);
+
+        self.walk.obstacles.iter_mut().for_each(|obstacle| {
+            obstacle.move_horizontal(walking_speed);
+            obstacle.check_intersection(&mut self.walk.boy);
+        });
+
+        if self.walk.timeline < TIMELINE_MINIMUM {
+            self.walk.generate_next_segment();
+        } else {
+            self.walk.timeline += walking_speed;
+        }
         self
     }
 }
@@ -806,6 +849,10 @@ enum WalkTheDogStateMachine {
 }
 
 impl WalkTheDogStateMachine {
+    fn new(walk: Walk) -> Self {
+        WalkTheDogStateMachine::Ready(WalkTheDogState::new(walk))
+    }
+
     fn update(self, keystate: &KeyState) -> Self {
         match self {
             WalkTheDogStateMachine::Ready(state) => state.update(keystate).into(),
@@ -885,25 +932,22 @@ impl Game for WalkTheDog {
                 let background_width = background.width() as i16;
                 let starting_obstacles = stone_and_platform(stone.clone(), sprite_sheet.clone(), 0);
                 let timeline = rightmost(&starting_obstacles);
-                let machine = WalkTheDogStateMachine::Ready(WalkTheDogState {
-                    _state: Ready,
-                    walk: Walk {
-                        boy: rhb,
-                        backgrounds: [
-                            Image::new(background.clone(), Point { x: 0, y: 0 }),
-                            Image::new(
-                                background,
-                                Point {
-                                    x: background_width,
-                                    y: 0,
-                                },
-                            ),
-                        ],
-                        obstacles: starting_obstacles,
-                        obstacle_sheet: sprite_sheet,
-                        stone,
-                        timeline,
-                    },
+                let machine = WalkTheDogStateMachine::new(Walk {
+                    boy: rhb,
+                    backgrounds: [
+                        Image::new(background.clone(), Point { x: 0, y: 0 }),
+                        Image::new(
+                            background,
+                            Point {
+                                x: background_width,
+                                y: 0,
+                            },
+                        ),
+                    ],
+                    obstacles: starting_obstacles,
+                    obstacle_sheet: sprite_sheet,
+                    stone,
+                    timeline,
                 });
                 Ok(Box::new(WalkTheDog {
                     machine: Some(machine),
