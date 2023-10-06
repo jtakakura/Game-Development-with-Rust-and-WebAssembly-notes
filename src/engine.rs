@@ -390,7 +390,7 @@ impl Audio {
 
 #[derive(Clone)]
 pub struct Sound {
-    buffer: AudioBuffer,
+    pub buffer: AudioBuffer,
 }
 
 pub fn add_click_handler(elem: HtmlElement) -> UnboundedReceiver<()> {
