@@ -70,10 +70,7 @@ pub async fn fetch_response(resource: &str) -> Result<Response> {
         .map_err(|err| anyhow!("error converting to Response {:#?}", err))
 }
 
-pub async fn fetch_json<T>(json_path: &str) -> Result<Result<T>>
-where
-    T: serde::de::DeserializeOwned,
-{
+pub async fn fetch_js_value(json_path: &str) -> Result<JsValue> {
     let resp: Response = fetch_response(json_path).await?;
 
     JsFuture::from(
@@ -82,7 +79,13 @@ where
     )
     .await
     .map_err(|err| anyhow!("error fetching JSON{:#?}", err))
-    .map(|json_value| {
+}
+
+pub async fn fetch_json<T>(json_path: &str) -> Result<Result<T>>
+where
+    T: serde::de::DeserializeOwned,
+{
+    fetch_js_value(json_path).await.map(|json_value| {
         serde_wasm_bindgen::from_value(json_value)
             .map_err(|err| anyhow!("error deserializing JSON {:#?}", err))
     })
@@ -177,4 +180,16 @@ pub fn find_html_element_by_id(id: &str) -> Result<HtmlElement> {
                 .dyn_into::<HtmlElement>()
                 .map_err(|element| anyhow!("Could not cast into HtmlElement {:#?}", element))
         })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use wasm_bindgen_test::wasm_bindgen_test;
+    wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
+    #[wasm_bindgen_test]
+    async fn test_error_loading_json() {
+        let json = fetch_js_value("not_there.json").await;
+        assert_eq!(json.is_err(), true);
+    }
 }
