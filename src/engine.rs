@@ -264,6 +264,7 @@ fn process_input(state: &mut KeyState, keyevent_receiver: &mut UnboundedReceiver
     }
 }
 
+#[derive(Debug)]
 pub struct KeyState {
     pressed_keys: HashMap<String, web_sys::KeyboardEvent>,
 }

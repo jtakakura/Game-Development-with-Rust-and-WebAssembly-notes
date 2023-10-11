@@ -940,6 +940,7 @@ impl WalkTheDogStateMachine {
     }
 
     fn update(self, keystate: &KeyState) -> Self {
+        log!("Keystate is {:#?}", keystate);
         match self {
             WalkTheDogStateMachine::Ready(state) => state.update(keystate).into(),
             WalkTheDogStateMachine::Walking(state) => state.update(keystate).into(),
