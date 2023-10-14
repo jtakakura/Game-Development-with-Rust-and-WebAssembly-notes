@@ -10,8 +10,10 @@
   "scripts": {
     "clean": "npx rimraf dist pkg",
     "wasm": "wasm-pack build --target web --out-name index",
+    "wasm-dev": "wasm-pack build --target web --dev --out-name index",
     "dev": "vite",
     "build": "npm run clean && npm run wasm && vite build",
+    "build-dev": "npm run clean && npm run wasm-dev && vite build",
     "test": "cargo test && wasm-pack test --headless"
   },
   "devDependencies": {

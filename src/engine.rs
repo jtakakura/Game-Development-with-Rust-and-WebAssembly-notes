@@ -98,7 +98,9 @@ impl GameLoop {
         let mut keystate = KeyState::new();
         *g.borrow_mut() = Some(browser::create_raf_closure(move |perf| {
             process_input(&mut keystate, &mut keyevent_receiver);
-            game_loop.accumulated_delta += (perf - game_loop.last_frame) as f32;
+
+            let frame_time = perf - game_loop.last_frame;
+            game_loop.accumulated_delta += frame_time as f32;
             while game_loop.accumulated_delta >= FRAME_SIZE {
                 game.update(&keystate);
                 game_loop.accumulated_delta -= FRAME_SIZE;
@@ -107,6 +109,12 @@ impl GameLoop {
             game.draw(&renderer);
             if let Err(err) = browser::request_animation_frame(f.borrow().as_ref().unwrap()) {
                 error!("Error to request animation frame{:#?}", err);
+            }
+
+            if cfg!(debug_assertions) {
+                unsafe {
+                    draw_frame_rate(&renderer, frame_time);
+                }
             }
         }));
 
@@ -165,6 +173,15 @@ impl Renderer {
             bounding_box.height.into(),
         );
         self.context.stroke();
+    }
+
+    #[allow(dead_code)]
+    pub fn draw_text(&self, text: &str, location: &Point) -> Result<()> {
+        self.context.set_font("16pt serif");
+        self.context
+            .fill_text(text, location.x.into(), location.y.into())
+            .map_err(|err| anyhow!("Error filling text {:#?}", err))?;
+        Ok(())
     }
 }
 
@@ -437,5 +454,27 @@ mod tests {
             width: 100,
         };
         assert_eq!(rect2.intersects(&rect1), true);
+    }
+}
+
+unsafe fn draw_frame_rate(render: &Renderer, frame_time: f64) {
+    static mut FRAMES_COUNTED: i32 = 0;
+    static mut TOTAL_FRAME_TIME: f64 = 0.0;
+    static mut FRAME_RATE: i32 = 0;
+
+    FRAMES_COUNTED += 1;
+    TOTAL_FRAME_TIME += frame_time;
+
+    if TOTAL_FRAME_TIME > 1000.0 {
+        FRAME_RATE = FRAMES_COUNTED;
+        FRAMES_COUNTED = 0;
+        TOTAL_FRAME_TIME = 0.0;
+    }
+
+    if let Err(err) = render.draw_text(
+        &format!("Frame Rate: {}", FRAME_RATE),
+        &Point { x: 400, y: 100 },
+    ) {
+        error!("Could not draw text {:#?}", err);
     }
 }
