@@ -1,4 +1,4 @@
-use std::{array, cell::RefCell, collections::HashMap, rc::Rc, sync::Mutex};
+use std::{cell::RefCell, collections::HashMap, rc::Rc, sync::Mutex};
 
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
@@ -44,13 +44,17 @@ pub async fn load_image(source: &str) -> Result<HtmlImageElement> {
 
     let success_callback = browser::closure_once(move || {
         if let Some(success_tx) = success_tx.lock().ok().and_then(|mut opt| opt.take()) {
-            success_tx.send(Ok(()));
+            if let Err(err) = success_tx.send(Ok(())) {
+                error!("Error to send {:#?}", err);
+            }
         }
     });
 
     let error_callback: Closure<dyn FnMut(JsValue)> = browser::closure_once(move |err| {
         if let Some(error_tx) = error_tx.lock().ok().and_then(|mut opt| opt.take()) {
-            error_tx.send(Err(anyhow!("Error Loading Image {:#?}", err)));
+            if let Err(err) = error_tx.send(Err(anyhow!("Error Loading Image {:#?}", err))) {
+                error!("Error to send {:#?}", err);
+            }
         }
     });
 
@@ -101,7 +105,9 @@ impl GameLoop {
             }
             game_loop.last_frame = perf;
             game.draw(&renderer);
-            browser::request_animation_frame(f.borrow().as_ref().unwrap());
+            if let Err(err) = browser::request_animation_frame(f.borrow().as_ref().unwrap()) {
+                error!("Error to request animation frame{:#?}", err);
+            }
         }));
 
         browser::request_animation_frame(
@@ -170,6 +176,7 @@ pub struct Rect {
 }
 
 impl Rect {
+    #[allow(dead_code)]
     pub const fn new(position: Point, width: i16, height: i16) -> Self {
         Self {
             position,
@@ -198,6 +205,7 @@ impl Rect {
         self.position.y
     }
 
+    #[allow(dead_code)]
     pub fn set_y(&mut self, y: i16) {
         self.position.y = y;
     }
@@ -228,15 +236,21 @@ fn prepare_input() -> Result<UnboundedReceiver<KeyPress>> {
     let keydown_sender = Rc::new(RefCell::new(keydown_sender));
     let keyup_sender = Rc::clone(&keydown_sender);
     let onkeydown = browser::closure_wrap(Box::new(move |keycode: web_sys::KeyboardEvent| {
-        keydown_sender
+        if let Err(err) = keydown_sender
             .borrow_mut()
-            .start_send(KeyPress::KeyDown(keycode));
+            .start_send(KeyPress::KeyDown(keycode))
+        {
+            error!("Error to send key down {:#?}", err);
+        }
     }) as Box<dyn FnMut(web_sys::KeyboardEvent)>);
 
     let onkeyup = browser::closure_wrap(Box::new(move |keycode: web_sys::KeyboardEvent| {
-        keyup_sender
+        if let Err(err) = keyup_sender
             .borrow_mut()
-            .start_send(KeyPress::KeyUp(keycode));
+            .start_send(KeyPress::KeyUp(keycode))
+        {
+            error!("Error to send key up {:#?}", err);
+        }
     }) as Box<dyn FnMut(web_sys::KeyboardEvent)>);
 
     browser::canvas()
@@ -280,6 +294,7 @@ impl KeyState {
         self.pressed_keys.contains_key(key)
     }
 
+    #[allow(dead_code)]
     pub fn is_released(&self, key: &str) -> bool {
         !self.is_pressed(key)
     }
@@ -381,11 +396,11 @@ impl Audio {
     }
 
     pub fn play_sound(&self, sound: &Sound) -> Result<()> {
-        sound::play_sound(&self.context, &sound.buffer, sound::LOOPING::NO)
+        sound::play_sound(&self.context, &sound.buffer, sound::Looping::No)
     }
 
     pub fn play_looping_sound(&self, sound: &Sound) -> Result<()> {
-        sound::play_sound(&self.context, &sound.buffer, sound::LOOPING::YES)
+        sound::play_sound(&self.context, &sound.buffer, sound::Looping::Yes)
     }
 }
 
@@ -397,7 +412,9 @@ pub struct Sound {
 pub fn add_click_handler(elem: HtmlElement) -> UnboundedReceiver<()> {
     let (mut click_sender, click_receiver) = unbounded();
     let on_click = browser::closure_wrap(Box::new(move || {
-        click_sender.start_send(());
+        if let Err(err) = click_sender.start_send(()) {
+            error!("Error to send on click {:#?}", err);
+        }
     }) as Box<dyn FnMut()>);
     elem.set_onclick(Some(on_click.as_ref().unchecked_ref()));
     on_click.forget();
