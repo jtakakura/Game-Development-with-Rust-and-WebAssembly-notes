@@ -14,7 +14,7 @@
     "dev": "vite",
     "build": "npm run clean && npm run wasm && vite build",
     "build-dev": "npm run clean && npm run wasm-dev && vite build",
-    "test": "cargo test && wasm-pack test --headless"
+    "test": "cargo test && wasm-pack test --headless --firefox"
   },
   "devDependencies": {
     "vite": "^4.4.9",
