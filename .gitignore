@@ -26,3 +26,6 @@ dist-ssr
 # Added by cargo
 /target
 /Cargo.lock
+
+# Local Netlify folder
+.netlify
